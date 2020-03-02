@@ -88,19 +88,26 @@
 
         </div>
         <service-bar></service-bar>
+        <modal title="提示" sure-text="查看购物车" btn-type="1" modal-type="middle" :show-modal="true">
+            <template v-slot:body>
+                <p>商品添加成功!</p>
+            </template>
+        </modal>
     </div>
 </template>
 
 <script>
 import ServiceBar from "../components/ServiceBar";
 import {swiper, swiperSlide} from 'vue-awesome-swiper';
+import Modal from "../components/Modal";
 import 'swiper/dist/css/swiper.css'
 export default {
     name: 'index',
     components: {
         ServiceBar,
         swiper,
-        swiperSlide
+        swiperSlide,
+        Modal,
     },
     data() {
         return {
