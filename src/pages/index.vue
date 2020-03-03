@@ -50,12 +50,12 @@
             </div>
             <div class="ads-box">
                 <a :href="'/#/product/'+item.id" v-for="(item,index) in adsList" :key="index">
-                    <img :src="item.img" alt="">
+                    <img v-lazy="item.img" alt="">
                 </a>
             </div>
             <div class="banner">
                 <a href="/#/product/30">
-                    <img src="/imgs/banner-1.png" alt="">
+                    <img v-lazy="'/imgs/banner-1.png'" alt="">
                 </a>
             </div>
         </div>
@@ -65,7 +65,7 @@
                 <div class="wrapper">
                     <div class="banner-left">
                         <a href="/#/product/35">
-                            <img src="/imgs/mix-alpha.jpg" alt="">
+                            <img v-lazy="'/imgs/mix-alpha.jpg'" alt="">
                         </a>
                     </div>
                     <div class="list-box">
@@ -73,12 +73,12 @@
                             <div class="item" v-for="(item,j) in arr" :key="j">
                                 <span :class="{'new-pro': j % 2=== 0}">新品</span>
                                 <div class="item-img">
-                                    <img :src="item.mainImage" alt="">
+                                    <img v-lazy="item.mainImage" alt="">
                                 </div>
                                 <div class="item-info">
                                     <h3>{{item.name}}</h3>
                                     <p>{{item.subtitle}}</p>
-                                    <p class="price">{{item.price}}</p>
+                                    <p class="price" @click="addCart(item.id)">{{item.price}}</p>
                                 </div>
                             </div>
                         </div>
@@ -88,7 +88,8 @@
 
         </div>
         <service-bar></service-bar>
-        <modal title="提示" sure-text="查看购物车" btn-type="1" modal-type="middle" :show-modal="true">
+        <modal title="提示" sure-text="查看购物车" btn-type="1" modal-type="middle"
+               :show-modal="showModal" @submit="goToCart" @cancel="showModal=false">
             <template v-slot:body>
                 <p>商品添加成功!</p>
             </template>
@@ -204,7 +205,8 @@ export default {
                     img: '/imgs/ads/ads-4.jpg'
                 }
             ],
-            phoneList: []
+            phoneList: [],
+            showModal: false,
         }
     },
     methods: {
@@ -218,6 +220,22 @@ export default {
                 res.list = res.list.slice(6.14);
                 this.phoneList = [res.list.slice(0, 4),res.list.slice(4,8)];
             })
+        },
+        addCart(id) {
+            console.log(id);
+            this.showModal = true;
+            return;
+            // this.axios.post('/carts',{
+            //     productId: id,
+            //     selected: true,
+            // }).then((res) => {
+            //     console.log(res);
+            // }).catch(() => {
+            //     this.showModal = true;
+            // })
+        },
+        goToCart(){
+            this.$router.push('/cart');
         }
     },
     mounted() {
