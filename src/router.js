@@ -1,16 +1,8 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Home from './pages/home.vue'
-import Login from './pages/login'
 import Index from './pages/index.vue'
-import Product from './pages/product.vue'
-import Detail from './pages/detail.vue'
-import Cart from './pages/cart.vue'
-import Order from './pages/order.vue'
-import OrderConfirm from './pages/orderConfirm.vue'
-import OrderList from './pages/orderList.vue'
-import OrderPay from './pages/orderPay.vue'
-import AliPay from './pages/alipay.vue'
+
 
 Vue.use(Router);
 
@@ -30,49 +22,49 @@ export default new Router({
                 {
                     path: '/product/:id',
                     name: 'product',
-                    component: Product,
+                    component: () => import('./pages/product'),
                 },
                 {
                     path: '/detail/:id',
                     name: 'detail',
-                    component: Detail,
+                    component: () => import('./pages/detail'),
                 }
             ]
         },
         {
           path: '/login',
           name: 'login',
-          component: Login,
+            component: () => import('./pages/login'),
         },
         {
             path: '/cart',
             name: 'cart',
-            component: Cart
+            component: () => import('./pages/cart'),
         },
         {
             path: '/order',
             name: 'order',
-            component: Order,
+            component: () => import('./pages/order'),
             children: [
                 {
                     path: 'list',
                     name: 'order-list',
-                    component: OrderList
+                    component: () => import('./pages/orderList'),
                 },
                 {
                     path: 'confirm',
                     name: 'order-confirm',
-                    component: OrderConfirm
+                    component: () => import('./pages/orderConfirm'),
                 },
                 {
                     path: 'pay',
                     name: 'order-pay',
-                    component: OrderPay
+                    component: () => import('./pages/orderPay'),
                 },
                 {
                     path: 'alipay',
                     name: 'alipay',
-                    component: AliPay
+                    component: () => import('./pages/alipay'),
                 }
             ]
         }

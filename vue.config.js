@@ -12,5 +12,11 @@ module.exports = {
             }
         }
     },
-    // lintOnSave: false
+    // lintOnSave: false,
+    // publicPath: '/app',
+    // outputDir: 'dist',
+    productionSourceMap: false,
+    chainWebpack: (config) => {
+        config.plugins.delete('prefetch')
+    }
 }
