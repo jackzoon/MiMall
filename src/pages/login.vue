@@ -37,6 +37,7 @@
     </div>
 </template>
 <script>
+    import {Message} from 'element-ui'
     export default {
         name: 'login',
         data(){
@@ -53,9 +54,14 @@
                     username,
                     password
                 }).then((res) => {
-                    this.$cookie.set('userId', res.id,{expires: '1M'});
+                    this.$cookie.set('userId', res.id,{expires: 'Session'});
                     this.$store.dispatch('saveUserName',res.username)
-                    this.$router.push('/index')
+                    this.$router.push({
+                        name: 'index',
+                        params: {
+                            from: 'login'
+                        }
+                    });
                 })
             },
             register(){
@@ -65,7 +71,7 @@
                     email: 'admin1@126.com'
                 }).then((res) => {
                     console.log(res);
-                    alert('注册成功');
+                    Message.success('注册成功');
                 })
             }
         }
