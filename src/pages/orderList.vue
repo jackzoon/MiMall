@@ -12,37 +12,36 @@
                     <div class="order" v-for="(order,index) in list" :key="index">
                         <div class="order-title">
                             <div class="item-info fl">
-                                {{order.createTime}}
+                                {{order.order.createTime | dateFormat}}
                                 <span>|</span>
-                                {{order.receiverName}}
+                                {{order.order.receiverContact}}
                                 <span>|</span>
-                                订单号：{{order.orderNo}}
+                                订单号：{{order.order.id}}
                                 <span>|</span>
-                                {{order.paymentTypeDesc}}
+                                {{order.order.payType == 1 ? '在线支付' : '货到付款'}}
                             </div>
                             <div class="item-money fr">
                                 <span>应付金额：</span>
-                                <span class="money">{{order.payment}}</span>
-                                <span>元</span>
+                                <span class="money">{{order.order.totalMoney | currency}}</span>
                             </div>
                         </div>
                         <div class="order-content clearfix">
                             <div class="good-box fl">
-                                <div class="good-list" v-for="(item,i) in order.orderItemVoList" :key="i">
+                                <div class="good-list" v-for="(item,i) in order.orderitem" :key="i">
                                     <div class="good-img">
-                                        <img v-lazy="item.productImage" alt="">
+                                        <img v-lazy="item.image" alt="">
                                     </div>
                                     <div class="good-name">
-                                        <div class="p-name">{{item.productName}}</div>
-                                        <div class="p-money">{{item.totalPrice + 'X' + item.quantity}}元</div>
+                                        <div class="p-name">{{item.name}}</div>
+                                        <div class="p-money">{{item.price | currency}}{{'X' + item.num}}</div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="good-state fr" v-if="order.status == 20">
-                                <a href="javascript:;">{{order.statusDesc}}</a>
+                            <div class="good-state fr" v-if="order.order.payStatus == 1">
+                                <a href="javascript:;">{{order.order.payStatus == 0 ? '未付款':'已支付'}}</a>
                             </div>
                             <div class="good-state fr" v-else>
-                                <a href="javascript:;" @click="goPay(order.orderNo)">{{order.statusDesc}}</a>
+                                <a href="javascript:;" @click="goPay(order.order.orderId)">未付款</a>
                             </div>
                         </div>
                     </div>
@@ -76,6 +75,7 @@
     import Loading from "../components/Loading";
     import NoData from "../components/NoData";
     import {Pagination} from 'element-ui';
+    import '../util/util';
     export default {
         name: 'order-list',
         components:{
@@ -98,9 +98,10 @@
         },
         methods: {
             getOrderList(){
-                this.axios.get('/orders',{
+                this.axios.get('/order/findOrderList',{
                     params:{
-                        pageNum: this.pageNum
+                        pageNum: this.pageNum,
+                        pageSize: this.pageSize
                     }
                 }).then((res)=>{
                     this.list = res.list;
@@ -122,7 +123,19 @@
                 this.pageNum = pageNum;
                 this.getOrderList()
             }
-        }
+        },
+        filters: {
+            currency(val) {
+                if (!val) return '0.00';
+                return '￥' + (val/100/10000).toFixed(2) + '万元'
+            },
+            nameFilter(val){
+                return val.split(' ')[0];
+            },
+            dateFormat(val){
+                return (new Date(val)).Format("yyyy-MM-dd hh:mm:ss");
+            }
+        },
     }
 </script>
 <style lang="scss">
@@ -172,6 +185,7 @@
                                     }
                                 }
                                 .good-name{
+                                    margin-left: 20px;
                                     font-size:20px;
                                     color:$colorB;
                                 }

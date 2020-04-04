@@ -2,16 +2,19 @@
     <div class="footer">
         <div class="footer-logo">
             <img src="/imgs/logo-footer.png" alt="">
-            <p>小米商城</p>
+            <p>小米二手车</p>
         </div>
         <div class="footer-link">
-            <a href="">小米官网</a><span>|</span>
+            <a href="">小米二手车官网</a><span>|</span>
             <a href="">Vue官网</a><span>|</span>
             <a href="">百度主页</a>
         </div>
         <div class="copyright">Copyright 2020 <span class="domain">halen.xyz</span> All Rights </div>
     </div>
 </template>
+
+
+
 
 <script>
 export default {

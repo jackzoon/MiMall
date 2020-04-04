@@ -31,9 +31,9 @@
                         <h2 class="addr-title">收货地址</h2>
                         <div class="addr-list clearfix">
                             <div class="addr-info" :class="{'checked':index == checkIndex}" @click="checkIndex=index" v-for="(item,index) in list" :key="index">
-                                <h2>{{item.receiverName}}</h2>
-                                <div class="phone">{{item.receiverMobile}}</div>
-                                <div class="street">{{item.receiverProvince + ' ' + item.receiverCity + ' ' + item.receiverDistrict + ' ' + item.receiverAddress}}</div>
+                                <h2>{{item.contact}}</h2>
+                                <div class="phone">{{item.phone}}</div>
+                                <div class="street">{{item.provinceName + ' ' + item.cityName + ' ' + item.areaName + ' ' + item.address}}</div>
                                 <div class="action">
                                     <a href="javascript:;" class="fl" @click="delAddress(item)">
                                         <svg class="icon icon-del">
@@ -56,13 +56,13 @@
                     <div class="item-good">
                         <h2>商品</h2>
                         <ul>
-                            <li v-for="(item,index) in cartList" :key="index">
+                            <li v-for="(cart,index) in cartList" :key="index">
                                 <div class="good-name">
-                                    <img v-lazy="item.productMainImage" alt="">
-                                    <span>{{item.productName + ' ' + item.productSubtitle}}</span>
+                                    <img v-lazy="cart.item.image" alt="">
+                                    <span>{{cart.item.name}}</span>
                                 </div>
-                                <div class="good-price">{{item.productPrice}}元x{{item.quantity}}</div>
-                                <div class="good-total">{{item.productTotalPrice}}元</div>
+                                <div class="good-price">{{cart.item.price | currency}} x {{cart.item.num}}</div>
+                                <div class="good-total">{{cart.item.money | currency}}</div>
                             </li>
                         </ul>
                     </div>
@@ -82,7 +82,7 @@
                         </div>
                         <div class="item">
                             <span class="item-name">商品总价：</span>
-                            <span class="item-val">{{cartTotalPrice}}元</span>
+                            <span class="item-val">{{cartTotalPrice | currency}}</span>
                         </div>
                         <div class="item">
                             <span class="item-name">优惠活动：</span>
@@ -94,7 +94,7 @@
                         </div>
                         <div class="item-total">
                             <span class="item-name">应付总额：</span>
-                            <span class="item-val">{{cartTotalPrice}}元</span>
+                            <span class="item-val">{{cartTotalPrice | currency}}</span>
                         </div>
                     </div>
                     <div class="btn-group">
@@ -114,34 +114,40 @@
             <template v-slot:body>
                 <div class="edit-wrap">
                     <div class="item">
-                        <input type="text" class="input" placeholder="姓名" v-model="checkedItem.receiverName">
-                        <input type="text" class="input" placeholder="手机号" v-model="checkedItem.receiverMobile">
+                        <input type="text" class="input" placeholder="联系人" v-model="checkedItem.contact">
+                        <input type="text" class="input" placeholder="手机号" v-model="checkedItem.phone">
                     </div>
                     <div class="item">
-                        <select name="province" v-model="checkedItem.receiverProvince">
-                            <option value="北京">北京</option>
-                            <option value="天津">天津</option>
-                            <option value="河北">河北</option>
-                        </select>
-                        <select name="city" v-model="checkedItem.receiverCity">
-                            <option value="北京">北京</option>
-                            <option value="天津">天津</option>
-                            <option value="河北">石家庄</option>
-                        </select>
-                        <select name="district" v-model="checkedItem.receiverDistrict">
-                            <option value="北京">昌平区</option>
-                            <option value="天津">海淀区</option>
-                            <option value="河北">东城区</option>
-                            <option value="天津">西城区</option>
-                            <option value="河北">顺义区</option>
-                            <option value="天津">房山区</option>
-                        </select>
+                        <el-select v-model="checkedItem.provinceid" @change="changeProvince" filterable placeholder="请选择省份" class="elSelect">
+                            <el-option
+                                    v-for="item in allProvinceCityAreaList.provinceList"
+                                    :key="item.provinceid"
+                                    :label="item.province"
+                                    :value="item.provinceid"
+                                    >
+                            </el-option>
+                        </el-select>
+
+                        <el-select v-model="checkedItem.cityid" @change="changeCity" filterable placeholder="请选择城市" class="elSelect">
+                            <el-option
+                                    v-for="item in cityList"
+                                    :key="item.cityid"
+                                    :label="item.city"
+                                    :value="item.cityid">
+                            </el-option>
+                        </el-select>
+
+                        <el-select v-model="checkedItem.areaid" @change="changeArea" filterable placeholder="请选择区县" class="elSelect">
+                            <el-option
+                                    v-for="item in areaList"
+                                    :key="item.areaid"
+                                    :label="item.area"
+                                    :value="item.areaid">
+                            </el-option>
+                        </el-select>
                     </div>
                     <div class="item">
-                        <textarea name="street" v-model="checkedItem.receiverAddress"></textarea>
-                    </div>
-                    <div class="item">
-                        <input type="text" class="input" placeholder="邮编" v-model="checkedItem.receiverZip">
+                        <textarea name="street" v-model="checkedItem.address" placeholder="请填写详细地址"></textarea>
                     </div>
                 </div>
             </template>
@@ -163,6 +169,8 @@
     import OrderHeader from './../components/OrderHeader'
     import Modal from './../components/Modal'
     import {Message} from 'element-ui'
+
+
     export default{
         name:'order-confirm',
         data(){
@@ -175,21 +183,49 @@
                 userAction:'',//用户行为 0：新增 1：编辑 2：删除
                 showDelModal:false,//是否显示删除弹框
                 showEditModal:false,//是否显示新增或者编辑弹框
-                checkIndex:0//当前收货地址选中索引
+                checkIndex:0,//当前收货地址选中索引
+                allProvinceCityAreaList:{},//所有省市区县列表
+                provinceList:[],//所有省份列表
+                cityList:[],//当前城市列表
+                areaList:[],//当前区县列表
             }
         },
         components:{
             OrderHeader,
-            Modal
+            Modal,
+        },
+        filters: {
+            currency(val) {
+                if (!val) return '0.00';
+                return '￥' + (val/100/10000).toFixed(2) + '万元'
+            },
+            nameFilter(val){
+                return val.split(' ')[0];
+            }
         },
         mounted(){
+            this.getAllProvinceCityAreaList();
             this.getAddressList();
             this.getCartList();
         },
         methods:{
+            getAllProvinceCityAreaList(){
+              this.axios.get(`/address/findAllProvinceCityAreaList`).then(res=>{
+                  this.allProvinceCityAreaList = res;
+              })
+            },
+            changeProvince(id){
+                this.cityList = this.allProvinceCityAreaList.cityList.filter(city => city.provinceid == id);
+            },
+            changeCity(id){
+                this.areaList = this.allProvinceCityAreaList.areaList.filter(area => area.cityid == id);
+            },
+            changeArea(id) {
+                console.log('区县',id);
+            },
             getAddressList(){
-                this.axios.get('/shippings').then((res)=>{
-                    this.list = res.list;
+                this.axios.get('/address/findAddressList').then((res)=>{
+                    this.list = res;
                 })
             },
             // 打开新增地址弹框
@@ -198,10 +234,12 @@
                 this.checkedItem = {};
                 this.showEditModal = true;
             },
-            // 打开新增地址弹框
+            // 打开编辑地址弹框
             editAddressModal(item){
                 this.userAction = 1;
                 this.checkedItem = item;
+                this.cityList = this.allProvinceCityAreaList.cityList.filter(city => city.provinceid == item.provinceid);
+                this.areaList = this.allProvinceCityAreaList.areaList.filter(area => area.cityid == item.cityid);
                 this.showEditModal = true;
             },
             delAddress(item){
@@ -211,49 +249,41 @@
             },
             // 地址删除、编辑、新增功能
             submitAddress(){
+
                 let {checkedItem,userAction} = this;
                 let method,url,params={};
-                if(userAction == 0){
-                    method = 'post',url = '/shippings';
+                if(userAction == 0){    // 0：新增 1：编辑 2：删除
+                    method = 'post',url = '/address/addAddress';
                 }else if(userAction == 1){
-                    method = 'put',url = `/shippings/${checkedItem.id}`;
+                    method = 'post',url = `/address/updateAddress`;
                 }else {
-                    method = 'delete',url = `/shippings/${checkedItem.id}`;
+                    method = 'get',url = `/address/deleteAddress?addressId=${checkedItem.id}`;
                 }
                 if(userAction == 0 || userAction ==1){
-                    let { receiverName, receiverMobile, receiverProvince, receiverCity, receiverDistrict, receiverAddress, receiverZip} = checkedItem;
                     let errMsg='';
-                    if(!receiverName){
+                    if(!checkedItem.contact){
                         errMsg = '请输入收货人名称';
-                    }else if(!receiverMobile || !/\d{11}/.test(receiverMobile)){
+                    }else if(!checkedItem.phone || !/\d{11}/.test(checkedItem.phone)){
                         errMsg = '请输入正确格式的手机号';
-                    }else if(!receiverProvince){
+                    }else if(!checkedItem.provinceid){
                         errMsg = '请选择省份';
-                    }else if(!receiverCity){
+                    }else if(!checkedItem.cityid){
                         errMsg = '请选择对应的城市';
-                    }else if(!receiverAddress || !receiverDistrict){
+                    }else if(!checkedItem.areaid){
+                        errMsg = '请选择对应的区县';
+                    }else if(!checkedItem.address){
                         errMsg = '请输入收货地址';
-                    }else if(!/\d{6}/.test(receiverZip)){
-                        errMsg = '请输入六位邮编';
                     }
                     if(errMsg){
                         Message.error(errMsg);
                         return;
                     }
-                    params = {
-                        receiverName,
-                        receiverMobile,
-                        receiverProvince,
-                        receiverCity,
-                        receiverDistrict,
-                        receiverAddress,
-                        receiverZip
-                    }
+                    params = checkedItem;
                 }
                 this.axios[method](url,params).then(()=>{
                     this.closeModal();
                     this.getAddressList();
-                    this.$message.success('操作成功');
+                    Message.success('操作成功');
                 });
             },
             closeModal(){
@@ -263,13 +293,15 @@
                 this.showEditModal = false;
             },
             getCartList(){
-                this.axios.get('/carts').then((res)=>{
-                    let list = res.cartProductVoList;//获取购物车中所有商品数据
-                    this.cartTotalPrice = res.cartTotalPrice;//商品总金额
-                    this.cartList = list.filter(item=>item.productSelected);
-                    this.cartList.map((item)=>{
-                        this.count += item.quantity;
-                    })
+                this.cartTotalPrice = 0;
+                this.count = 0;
+                this.axios.get('/cart/findCartList').then((res)=>{
+                    let list = res;//获取购物车中所有商品数据
+                    this.cartList = list.filter(item=>item.checked);
+                    for (let i = 0; i < this.cartList.length; i++) {
+                        this.cartTotalPrice += this.cartList[i].item.money;
+                        this.count += this.cartList[i].item.num;
+                    }
                 })
             },
             // 订单提交
@@ -279,13 +311,11 @@
                     Message.error('请选择一个收货地址');
                     return;
                 }
-                this.axios.post('/orders',{
-                    shippingId:item.id
-                }).then((res)=>{
+                this.axios.get(`/order/create?addressId=${item.id}`).then((res)=>{
                     this.$router.push({
                         path:'/order/pay',
                         query:{
-                            orderNo:res.orderNo
+                            orderNo:res
                         }
                     })
                 })
@@ -388,9 +418,12 @@
                         .good-name{
                             flex:5;
                             img{
-                                width:30px;
-                                height:30px;
+                                width:50px;
+                                height:50px;
                                 vertical-align:middle;
+                            }
+                            span{
+                                margin-left: 10px;
                             }
                         }
                         .good-price{
@@ -432,11 +465,12 @@
                     }
                     .item-val{
                         display:inline-block;
-                        width:100px;
+                        width:170px;
                     }
                     .item-total{
                         .item-val{
-                            font-size:28px;
+                            font-size:25px;
+                            font-weight: bold;
                         }
                     }
                 }
@@ -461,8 +495,9 @@
                         margin-left:14px;
                     }
                 }
-                select{
+                .elSelect{
                     height:40px;
+                    width: 176px;
                     line-height:40px;
                     border:1px solid #E5E5E5;
                     margin-right:15px;

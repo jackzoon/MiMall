@@ -4,11 +4,10 @@
         <div class="wrapper">
             <div class="container clearfix">
                 <div class="swiper">
-                    <swiper :options="swiperOption">
-                        <swiper-slide><img src="/imgs/detail/phone-1.jpg" alt=""></swiper-slide>
-                        <swiper-slide><img src="/imgs/detail/phone-2.jpg" alt=""></swiper-slide>
-                        <swiper-slide><img src="/imgs/detail/phone-3.jpg" alt=""></swiper-slide>
-                        <swiper-slide><img src="/imgs/detail/phone-4.jpg" alt=""></swiper-slide>
+                    <swiper :options="swiperOption" >
+                        <swiper-slide v-for="(image,index) in imageList" :key="index">
+                            <img :src="image" alt="">
+                        </swiper-slide>
                         <!-- Optional controls -->
                         <div class="swiper-pagination"  slot="pagination"></div>
                     </swiper>
@@ -17,7 +16,7 @@
                     <h2 class="item-title">{{product.name}}</h2>
                     <p class="item-info">相机全新升级 / 960帧超慢动作 / 手持超级夜景 / 全球首款双频GPS / 骁龙845处理器 / 红<br/>外人脸解锁 / AI变焦双摄 / 三星 AMOLED 屏</p>
                     <div class="delivery">小米自营</div>
-                    <div class="item-price">{{product.price}}<span class="del">2999元</span></div>
+                    <div class="item-price">{{product.price | currency}}<span class="del">2999元</span></div>
                     <div class="line"></div>
                     <div class="item-addr">
                         <i class="icon-loc"></i>
@@ -39,9 +38,9 @@
                     <div class="item-total">
                         <div class="phone-info clearfix">
                             <div class="fl">{{product.name}} {{version==1?'6GB+64GB 全网通':'4GB+64GB 移动4G'}}</div>
-                            <div class="fr">{{product.price}}元</div>
+                            <div class="fr">{{product.price | currency}}</div>
                         </div>
-                        <div class="phone-total">总计：{{product.price}}元</div>
+                        <div class="phone-total">总计：{{product.price | currency}}</div>
                     </div>
                     <div class="btn-group">
                         <a href="javascript:;" class="btn btn-huge fl" @click="addCart">加入购物车</a>
@@ -72,11 +71,22 @@
             swiperSlide,
             swiper,
         },
+        filters: {
+            currency(val) {
+                if (!val) return '0.00';
+                return '￥' + (val/100/10000).toFixed(2) + '万元'
+            },
+            nameFilter(val){
+                return val.split(' ')[0];
+            }
+        },
         data(){
             return {
                 id: this.$route.params.id,  //获取商品ID
                 version: 1, //商品版本切换
                 product: {},    // 商品信息
+                detail:{},//商品详情
+                imageList:[],//商品图片
                 swiperOption:{
                     autoplay:true,
                     pagination: {
@@ -91,15 +101,14 @@
         },
         methods: {
             getProductInfo() {
-                this.axios.get(`/products/${this.id}`).then((res)=>{
-                    this.product = res;
+                this.axios.get(`/product/productDetailById?productId=${this.id}`).then((res)=>{
+                    this.product = res.product;
+                    this.detail = res.detail;
+                    this.imageList = res.detail.images.split(',');
                 })
             },
             addCart(){
-                this.axios.post('/carts',{
-                    productId: this.id,
-                    selected: true,
-                }).then((res={cartProductVoList:0}) =>{
+                this.axios.get(`/cart/addItem?productId=${this.id}&num=1`).then(res =>{
                     this.$store.dispatch('saveCartCount', res.cartTotalQuantity);
                     this.$router.push('/cart');
                 })
@@ -118,8 +127,8 @@
                 height:617px;
                 margin-top:5px;
                 img{
-                    width:100%;
-                    height:100%;
+                    width:600px;
+                    height:600px;
                 }
             }
             .content{

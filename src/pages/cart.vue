@@ -17,24 +17,24 @@
                         <li class="col-1">操作</li>
                     </ul>
                     <ul class="cart-item-list">
-                        <li class="cart-item" v-for="(item,index) in list" v-bind:key="index">
+                        <li class="cart-item" v-for="(arr,index) in list" v-bind:key="index">
                             <div class="item-check">
-                                <span class="checkbox" :class="{'checked':item.productSelected}" @click="updateCart(item)"></span>
+                                <span class="checkbox" :class="{'checked':arr.checked}" @click="updateCart(arr)"></span>
                             </div>
                             <div class="item-name">
-                                <img v-lazy="item.productMainImage" alt="">
-                                <span>{{item.productName + ' , ' + item.productSubtitle}}</span>
+                                <img v-lazy="arr.item.image" alt="">
+                                <span>{{arr.item.name}}</span>
                             </div>
-                            <div class="item-price">{{item.productPrice}}</div>
+                            <div class="item-price">{{arr.item.price | currency}}</div>
                             <div class="item-num">
                                 <div class="num-box">
-                                    <a href="javascript:;" @click="updateCart(item,'-')">-</a>
-                                    <span>{{item.quantity}}</span>
-                                    <a href="javascript:;" @click="updateCart(item,'+')">+</a>
+                                    <a href="javascript:;" @click="updateCart(arr,'-')">-</a>
+                                    <span>{{arr.item.num}}</span>
+                                    <a href="javascript:;" @click="updateCart(arr,'+')">+</a>
                                 </div>
                             </div>
-                            <div class="item-total">{{item.productTotalPrice}}</div>
-                            <div class="item-del" @click="delProduct(item)"></div>
+                            <div class="item-total">{{arr.item.money | currency}}</div>
+                            <div class="item-del" @click="delProduct(arr)"></div>
                         </li>
                     </ul>
                 </div>
@@ -44,7 +44,7 @@
                         共<span>{{list.length}}</span>件商品，已选择<span>{{checkedNum}}</span>件
                     </div>
                     <div class="total fr">
-                        合计：<span>{{cartTotalPrice}}</span>元
+                        合计：<span>{{cartTotalPrice | currency}}</span>元
                         <a href="javascript:;" class="btn" @click="order">去结算</a>
                     </div>
                 </div>
@@ -66,6 +66,15 @@
             ServiceBar,
             NavFooter
         },
+        filters: {
+            currency(val) {
+                if (!val) return '0.00';
+                return '￥' + (val/100/10000).toFixed(2) + '万元'
+            },
+            nameFilter(val){
+                return val.split(' ')[0];
+            }
+        },
         data(){
             return{
                 list:[],    //商品列表
@@ -80,58 +89,65 @@
         methods:{
             // 获取购物车列表
             getCartList() {
-                this.axios.get('/carts').then((res) => {
+                this.axios.get('/cart/findCartList').then((res) => {
                     this.renderData(res);
                 })
             },
             // 删除购物车商品
-            delProduct(item){
-                this.axios.delete(`/carts/${item.productId}`).then((res)=>{
+            delProduct(arr){
+                this.axios.get(`/cart/deleteCheckedCart?productId=${arr.item.productId}`).then((res)=>{
                     Message.success('删除成功');
                     this.renderData(res);
                 })
             },
             // 更新购物车数量和购物车单选状态
-            updateCart(item,type){
-                let quantity = item.quantity,
-                    selected = item.productSelected;
+            updateCart(arr,type){
+                let num = arr.item.num,
+                    selected = arr.checked;
                 if (type == '-') {
-                    if (quantity == 1) {
+                    if (num == 1) {
                         Message.warning('商品至少保留一件');
                         return;
                     }
-                    quantity = quantity - 1;
+                    num = num - 1;
                 } else if (type == '+') {
-                    if (quantity >= item.productStock) {
+                    if (num >= arr.stock) {
                         Message.info('商品不能超过库存数量')
+                        return;
                     }
-                    quantity = quantity + 1;
+                    num = num + 1;
                 }else{
-                    selected = !item.productSelected;
+                    selected = !arr.checked;
                 }
-                this.axios.put(`/carts/${item.productId}`,{
-                    quantity,
-                    selected,
-                }).then((res) => {
+                this.axios.get(`/cart/updateItem?productId=${arr.item.productId}&checked=${selected}&num=${num}`).then((res) => {
                     this.renderData(res);
                 })
             },
             // 控制全选功能
             toggleAll(){
-                let url = this.allChecked ? '/carts/unSelectAll' : '/carts/selectAll';
-                this.axios.put(url).then((res) => {
+                let url = this.allChecked ? '/cart/unSelectAll' : '/cart/selectAll';
+                this.axios.get(url).then((res) => {
                     this.renderData(res);
                 })
             },
             renderData(res){
-                this.list = res.cartProductVoList || [];
-                this.allChecked = res.selectedAll;
-                this.cartTotalPrice = res.cartTotalPrice;
-                this.checkedNum = this.list.filter(item=>item.productSelected).length;
+                this.cartTotalPrice = 0;
+                this.list = res || [];
+                this.checkedNum = this.list.filter(item=>item.checked).length;
+                for (let i = 0; i < this.list.length; i++) {
+                    if (this.list[i].checked) {
+                        this.cartTotalPrice += this.list[i].item.money;
+                    }
+                }
+                if (this.list.length == this.checkedNum) {
+                    this.allChecked = true;
+                } else {
+                    this.allChecked = false;
+                }
             },
             // 购物车下单
             order(){
-                let isCheck = this.list.every(item => !item.productSelected);
+                let isCheck = this.list.every(item => !item.checked);
                 if (isCheck) {
                     Message.warning('请选择一件商品');
                     return;

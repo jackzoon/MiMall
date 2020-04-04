@@ -28,6 +28,11 @@ export default new Router({
                     path: '/detail/:id',
                     name: 'detail',
                     component: () => import('./pages/detail'),
+                },
+                {
+                    path: '/search/:keywords',
+                    name: 'search',
+                    component: () => import('./pages/search'),
                 }
             ]
         },

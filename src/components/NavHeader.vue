@@ -3,7 +3,7 @@
         <div class="nav-topbar">
             <div class="container">
                 <div class="topbar-menu">
-                    <a href="javascript:;">小米商城</a>
+                    <a href="javascript:;">小米二手车</a>
                     <a href="javascript:;">MIUI</a>
                     <a href="javascript:;">云服务</a>
                     <a href="javascript:;">协议规则</a>
@@ -23,92 +23,28 @@
                     <a href="/#/index"></a>
                 </div>
                 <div class="header-menu">
-                    <div class="item-menu">
-                        <span>小米手机</span>
+                    <div class="item-menu" v-for="(arr,i) in activityList" :key="i">
+                        <span>{{arr.name}}</span>
                         <div class="children">
                             <ul>
-                                <li class="product" v-for="(item,index) in phoneList" :key="index">
-                                    <a :href="'/#/product/'+item.id" target="_blank">
+                                <li class="product" v-for="(item,index) in arr.productList" :key="index">
+                                    <a :href="'/#/detail/'+item.id" target="_blank">
                                         <div class="pro-img">
-                                            <img v-lazy="item.mainImage" :alt="item.subtitle">
+                                            <img v-lazy="item.image" :alt="item.name">
                                         </div>
-                                        <div class="pro-name">{{item.name}}</div>
+                                        <div class="pro-name">{{item.name | nameFilter}}</div>
                                         <div class="pro-price">{{item.price | currency}}</div>
                                     </a>
                                 </li>
                             </ul>
                         </div>
                     </div>
-                    <div class="item-menu">
-                        <span>RedMi手机</span>
-                        <div class="children"></div>
-                    </div>
-                    <div class="item-menu">
-                        <span>电视</span>
-                        <div class="children">
-                            <ul>
-                                <li class="product">
-                                    <a href="" target="_blank">
-                                        <div class="pro-img">
-                                            <img v-lazy="'/imgs/nav-img/nav-3-1.jpg'" alt="">
-                                        </div>
-                                        <div class="pro-name">小米壁画电视 65英寸</div>
-                                        <div class="pro-price">1799元</div>
-                                    </a>
-                                </li>
-                                <li class="product">
-                                    <a href="" target="_blank">
-                                        <div class="pro-img">
-                                            <img v-lazy="'/imgs/nav-img/nav-3-2.jpg'" alt="">
-                                        </div>
-                                        <div class="pro-name">小米CC9</div>
-                                        <div class="pro-price">1799元</div>
-                                    </a>
-                                </li>
-                                <li class="product">
-                                    <a href="" target="_blank">
-                                        <div class="pro-img">
-                                            <img v-lazy="'/imgs/nav-img/nav-3-3.png'" alt="">
-                                        </div>
-                                        <div class="pro-name">小米CC9</div>
-                                        <div class="pro-price">1799元</div>
-                                    </a>
-                                </li>
-                                <li class="product">
-                                    <a href="" target="_blank">
-                                        <div class="pro-img">
-                                            <img v-lazy="'/imgs/nav-img/nav-3-4.jpg'" alt="">
-                                        </div>
-                                        <div class="pro-name">小米CC9</div>
-                                        <div class="pro-price">1799元</div>
-                                    </a>
-                                </li>
-                                <li class="product">
-                                    <a href="" target="_blank">
-                                        <div class="pro-img">
-                                            <img v-lazy="'/imgs/nav-img/nav-3-5.jpg'" alt="">
-                                        </div>
-                                        <div class="pro-name">小米CC9</div>
-                                        <div class="pro-price">1799元</div>
-                                    </a>
-                                </li>
-                                <li class="product">
-                                    <a href="" target="_blank">
-                                        <div class="pro-img">
-                                            <img v-lazy="'/imgs/nav-img/nav-3-6.png'" alt="">
-                                        </div>
-                                        <div class="pro-name">小米CC9</div>
-                                        <div class="pro-price">1799元</div>
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
+
                 </div>
                 <div class="header-search">
                     <div class="wrapper">
-                        <input type="text" name="keyword">
-                        <a href="javascript:;"></a>
+                        <input type="text" v-model="keywords">
+                        <a :href="'/#/search/'+keywords" ></a>
                     </div>
                 </div>
             </div>
@@ -122,7 +58,9 @@ export default {
     name: 'nav-header',
     data(){
         return {
-            phoneList:[]
+            phoneList:[],
+            activityList:[],
+            keywords:'',
         }
     },
     computed: {
@@ -136,11 +74,14 @@ export default {
     filters: {
         currency(val) {
             if (!val) return '0.00';
-            return '￥' + val.toFixed(2) + '元'
+            return '￥' + (val/100/10000).toFixed(2) + '万元'
+        },
+        nameFilter(val){
+            return val.split(' ')[0];
         }
     },
     mounted() {
-        this.getProductList();
+        this.getActivityList();
         let params = this.$route.params;
         if (params && params.from == 'login') {
             this.getCartCount();
@@ -151,31 +92,28 @@ export default {
             this.$router.push('/login');
         },
         logout(){
-          this.axios.post('/user/logout').then(() => {
+          this.axios.post('/sso/logout').then(() => {
               Message.success('退出成功');
-              this.$cookie.set('userId','',{expires: '-1'});
+              this.$cookie.set('token','',{expires: '-1'});
               this.$store.dispatch('saveUserName', '');
               this.$store.dispatch('saveCartCount', '0');
           })
         },
-        getProductList() {
-            this.axios.get('/products',{
-                params: {
-                    categoryId: '100012'
-                }
-            }).then((res) => {
-                if (res.list.length >= 6) {
-                    this.phoneList = res.list.slice(0, 6);
-                }
+        getActivityList() {
+            this.axios.get(`/index/findActivityList`).then(res=>{
+                this.activityList = res;
             })
         },
         goToCart(){
             this.$router.push('/cart');
         },
         getCartCount(){
-            this.axios.get('/carts/products/sum').then((res=0) => {
-                this.$store.dispatch('saveCartCount',res);
+            this.axios.get('/cart/findCartList').then(res => {
+                this.$store.dispatch('saveCartCount',res.length);
             })
+        },
+        goToSearch() {
+            this.$router.push('/search/奥迪')
         }
     }
 }

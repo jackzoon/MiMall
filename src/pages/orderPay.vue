@@ -13,28 +13,28 @@
                         <div class="order-info">
                             <h2>订单提交成功！去付款咯～</h2>
                             <p>请在<span>30分</span>内完成支付, 超时后将取消订单</p>
-                            <p>收货信息：{{addressInfo}}</p>
+                            <p>收货信息：{{orderInfo.receiverAddress}}</p>
                         </div>
                         <div class="order-total">
-                            <p>应付总额：<span>{{payment}}</span>元</p>
+                            <p>应付总额：<span>{{orderInfo.totalMoney | currency}}</span></p>
                             <p>订单详情<em class="icon-down" :class="{'up':showDetail}" @click="showDetail=!showDetail"></em></p>
                         </div>
                     </div>
                     <div class="item-detail" v-if="showDetail">
                         <div class="item">
                             <div class="detail-title">订单号：</div>
-                            <div class="detail-info theme-color">{{orderNo}}</div>
+                            <div class="detail-info theme-color">{{orderInfo.id}}</div>
                         </div>
                         <div class="item">
                             <div class="detail-title">收货信息：</div>
-                            <div class="detail-info">{{addressInfo}}</div>
+                            <div class="detail-info">{{orderInfo.receiverAddress}}</div>
                         </div>
                         <div class="item good">
                             <div class="detail-title">商品名称：</div>
                             <div class="detail-info">
                                 <ul>
                                     <li v-for="(item,index) in orderDetail" :key="index">
-                                        <img v-lazy="item.productImage"/>{{item.productName}}
+                                        <img v-lazy="item.image"/>{{item.name}}
                                     </li>
                                 </ul>
                             </div>
@@ -50,7 +50,7 @@
                     <div class="pay-way">
                         <p>支付平台</p>
                         <div class="pay pay-ali" :class="{'checked':payType==1}" @click="paySubmit(1)"></div>
-                        <div class="pay pay-wechat" :class="{'checked':payType==2}" @click="paySubmit(2)"></div>
+<!--                        <div class="pay pay-wechat" :class="{'checked':payType==2}" @click="paySubmit(2)"></div>-->
                     </div>
                 </div>
             </div>
@@ -86,7 +86,7 @@
         data(){
             return {
                 orderNo: this.$route.query.orderNo,
-                addressInfo: '',  //收货人地址信息
+                orderInfo: '',  //订单信息
                 orderDetail: [],  // 订单详情
                 showDetail: false, // 是否显示订单详情
                 payType: '', //支付类型
@@ -100,26 +100,29 @@
         mounted() {
             this.getOrderDetail();
         },
+        filters: {
+            currency(val) {
+                if (!val) return '0.00';
+                return '￥' + (val/100/10000).toFixed(2) + '万元'
+            },
+            nameFilter(val){
+                return val.split(' ')[0];
+            }
+        },
         methods: {
             getOrderDetail() {
-                this.axios.get(`/orders/${this.orderNo}`).then((res) => {
-                    let item = res.shippingVo;
-                    this.addressInfo = `${item.receiverName} ${item.receiverMobile} ${item.receiverProvince} ${item.receiverCity} ${item.receiverDistrict} ${item.receiverAddress}`;
-                    this.orderDetail = res.orderItemVoList;
+                this.axios.get(`/order/findOrderById?orderId=${this.orderNo}`).then((res) => {
+                    this.orderInfo = res.order;
+                    this.orderDetail = res.orderitemList;
                     this.payment = res.payment;
                 })
             },
             paySubmit(payType){
-                if(payType == 1){
-                    window.open('/#/order/alipay?orderId=' + this.orderNo,'_blank');
+                if(payType == 2){
+                    console.log('微信支付还不支持')
                 }else{
-                    this.axios.post('/pay',{
-                        orderId:this.orderNo,
-                        orderName: 'Vue项目',
-                        amount: 0.01,
-                        payType:2 // 1支付宝，2微信
-                    }).then((res) => {
-                        QRCode.toDataURL(res.content).then(url => {
+                    this.axios.get(`/order/alipay?orderId=${this.orderNo}`).then((res) => {
+                        QRCode.toDataURL(res).then(url => {
                             this.showPay = true;
                             this.payImg = url;
                             this.loopOrderState();
@@ -136,8 +139,8 @@
             // 轮训当前订单支付状况
             loopOrderState(){
                 this.T = setInterval(() => {
-                    this.axios.get(`/orders/${this.orderNo}`).then((res)=>{
-                        if (res.status == 20) {
+                    this.axios.get(`/order/isPay?orderId=${this.orderNo}`).then((res)=>{
+                        if (res == true) {
                             clearInterval(this.T);
                             this.goOrderList();
                         }
@@ -263,8 +266,8 @@
                         }
                     }
                     .pay-ali{
-                        background:url('/imgs/pay/icon-ali.png') no-repeat center;
-                        background-size:103px 38px;
+                        background:url('/imgs/pay/alipaydmf.png') no-repeat center;
+                        background-size:170px 38px;
                         margin-top:19px;
                     }
                     .pay-wechat{

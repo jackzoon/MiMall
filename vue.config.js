@@ -1,10 +1,10 @@
 module.exports = {
     devServer:{
         host:'localhost',
-        port: 8080,
+        port: 8081,
         proxy: {
             '/api': {
-                target: 'http://mall-pre.springboot.cn',
+                target: 'http://localhost:8085',
                 changeOrigin: true,
                 pathRewrite: {
                     '/api': ''

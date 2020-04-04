@@ -4,10 +4,10 @@
     <div class="item-wrap">
       <div class="img-scan"></div>
       <div class="img-pay">
-        <div class="title">微信支付<em @click="close"></em></div>
+        <div class="title">支付宝支付(沙箱环境)<em @click="close"></em></div>
         <div class="qrcode"><img :src="img"></div>
         <div class="tip">
-          <p>请使用<span class="theme-color">微信</span>扫一扫</p>
+          <p>请使用<span class="theme-color">支付宝</span>扫一扫</p>
           <p>二维码完成支付</p>
         </div>
       </div>
@@ -51,7 +51,7 @@
       display: flex;
       align-items: center;
       .img-scan{
-        @include bgImg(296px,485px,'/imgs/pay/icon-scan.png');
+        @include bgImg(296px,485px,'/imgs/pay/icon-scan1.png');
       }
       .img-pay{
         width: 370px;

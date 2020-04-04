@@ -1,8 +1,3 @@
-function getQueryString(name){
-    let reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
-    let r = window.location.search.substr(1).match(reg);
-    if(r!=null)return unescape(r[2]); return null;
-}
 
 
 // 对Date的扩展，将 Date 转化为指定格式的String

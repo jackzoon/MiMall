@@ -17,20 +17,20 @@ export default {
     }
   },
   mounted() {
-    if (this.$cookie.get('userId')) {
+    if (this.$cookie.get('token')) {
       this.getUser();
       this.getCartCount();
     }
   },
   methods: {
     getUser(){
-      this.axios.get('/user').then((res={}) => {
-        this.$store.dispatch('saveUserName', res.username);
+      this.axios.get('/sso/username').then((res={}) => {
+        this.$store.dispatch('saveUserName', res);
       })
     },
     getCartCount(){
-      this.axios.get('/carts/products/sum').then((res=0) => {
-        this.$store.dispatch('saveCartCount',res);
+      this.axios.get('/cart/findCartList').then(res => {
+        this.$store.dispatch('saveCartCount',res.length);
       })
     }
   }

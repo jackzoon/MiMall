@@ -5,42 +5,32 @@
                 <div class="nav-menu">
                     <ul class="menu-wrap">
                         <li class="menu-item">
-                            <a href="javascript:;">手机 电话卡</a>
-                            <div class="children">
-                                <ul v-for="(item,i) in menuList" :key="i">
-                                    <li v-for="(sub,j) in item" :key="j">
-                                        <a :href="sub ? '/#/product/' + sub.id : ''">
-                                            <img :src="sub ? sub.img : '/imgs/item-box-1.png'" alt="">
-                                            {{sub ? sub.name : '小米9'}}
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
+                            <a href="javascript:;">奥迪</a>
                         </li>
                         <li class="menu-item">
-                            <a href="javascript:;">电视 盒子</a>
+                            <a href="javascript:;">宝马</a>
                             <div class="children"></div>
                         </li>
                         <li class="menu-item">
-                            <a href="javascript:;">笔记本 平板</a>
+                            <a href="javascript:;">奔驰</a>
                         </li>
                         <li class="menu-item">
-                            <a href="javascript:;">家电 插线板</a>
+                            <a href="javascript:;">沃尔沃</a>
                         </li>
                         <li class="menu-item">
-                            <a href="javascript:;">出行 穿戴</a>
+                            <a href="javascript:;">保时捷</a>
                         </li>
                         <li class="menu-item">
-                            <a href="javascript:;">电源 配件</a>
+                            <a href="javascript:;">凯迪拉克</a>
                         </li>
                         <li class="menu-item">
-                            <a href="javascript:;">生活 箱包</a>
+                            <a href="javascript:;">哈弗</a>
                         </li>
                     </ul>
                 </div>
                 <swiper :options="swiperOption">
                     <swiper-slide v-for="(item,index) in sliderList" :key="index">
-                        <a :href="'/#/product/'+item.id"><img :src="item.img" alt=""></a>
+                        <a :href="'/#/detail/'+item.productId"><img :src="item.image" alt=""></a>
                     </swiper-slide>
                     <!-- Optional controls -->
                     <div class="swiper-pagination"  slot="pagination"></div>
@@ -49,40 +39,58 @@
                 </swiper>
             </div>
             <div class="ads-box">
-                <a :href="'/#/product/'+item.id" v-for="(item,index) in adsList" :key="index">
-                    <img v-lazy="item.img" alt="">
+                <a :href="'/#/detail/'+item.id" v-for="(item,index) in adsList" :key="index">
+                    <img v-lazy="item.img" alt="点击购买">
                 </a>
             </div>
             <div class="banner">
-                <a href="/#/product/30">
-                    <img v-lazy="'/imgs/banner-1.png'" alt="">
-                </a>
+                <div class="item-video">
+                    <div class="video-bg" @click="showSlide='slideDown'">
+                        <img src="/imgs/video-btn2.png" alt="点击播放视频">
+                    </div>
+                    <div class="video-box" v-if="showSlide">
+                        <div class="overlay" ></div>
+                        <div class="video" :class="showSlide">
+                            <span class="icon-close" @click="closeVideo"></span>
+                            <video src="/imgs/pdp1233.mp4" muted autoplay controls="controls"></video>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="product-box">
             <div class="container">
-                <h2>手机</h2>
+                <h2>品牌二手车</h2>
                 <div class="wrapper">
                     <div class="banner-left">
                         <a href="/#/product/35">
-                            <img v-lazy="'/imgs/mix-alpha.jpg'" alt="">
+                            <img v-lazy="'https://fastcar.oss-cn-shenzhen.aliyuncs.com/goods/ad-left1.jpg'" alt="">
                         </a>
                     </div>
                     <div class="list-box">
-                        <div class="list" v-for="(arr,i) in phoneList" :key="i">
+                        <div class="list" v-for="(arr,i) in productList" :key="i">
                             <div class="item" v-for="(item,j) in arr" :key="j">
                                 <span :class="{'new-pro': j % 2=== 0}">新品</span>
                                 <div class="item-img">
-                                    <img v-lazy="item.mainImage" alt="">
+                                    <img v-lazy="item.image" alt="">
                                 </div>
                                 <div class="item-info">
-                                    <h3>{{item.name}}</h3>
-                                    <p>{{item.subtitle}}</p>
-                                    <p class="price" @click="addCart(item.id)">{{item.price}}</p>
+                                    <h3>{{item.name | nameFilter}}</h3>
+                                    <p>{{item.mileage}}</p>
+                                    <p class="price" @click="addCart(item.id)">{{item.price | currency}}</p>
                                 </div>
                             </div>
                         </div>
+                        <el-pagination class="pagination"
+                                       background
+                                       layout="prev, pager, next"
+                                       :pageSize="pageSize"
+                                       :total="total"
+                                       @current-change="handleChange"
+                        >
+                        </el-pagination>
                     </div>
+
                 </div>
             </div>
 
@@ -101,7 +109,8 @@
 import ServiceBar from "../components/ServiceBar";
 import {swiper, swiperSlide} from 'vue-awesome-swiper';
 import Modal from "../components/Modal";
-import 'swiper/dist/css/swiper.css'
+import 'swiper/dist/css/swiper.css';
+import {Pagination} from 'element-ui';
 export default {
     name: 'index',
     components: {
@@ -109,6 +118,7 @@ export default {
         swiper,
         swiperSlide,
         Modal,
+        [Pagination.name]:Pagination,
     },
     data() {
         return {
@@ -131,23 +141,8 @@ export default {
                     prevEl: '.swiper-button-prev',
                 }
             },
-            sliderList: [
-                { id: '42',
-                    img: '/imgs/slider/slide-1.jpg',
-                },
-                { id: '45',
-                    img: '/imgs/slider/slide-2.jpg',
-                },
-                { id: '46',
-                    img: '/imgs/slider/slide-3.jpg',
-                },
-                { id: '',
-                    img: '/imgs/slider/slide-4.jpg',
-                },
-                { id: '',
-                    img: '/imgs/slider/slide-5.jpg',
-                }
-            ],
+            showSlide:'',
+            sliderList: [],
             menuList:[
                 [
                     {
@@ -189,51 +184,89 @@ export default {
             ],
             adsList: [
                 {
-                    id: '33',
-                    img: '/imgs/ads/ads-1.png'
+                    id: '1',
+                    img: 'https://fastcar.oss-cn-shenzhen.aliyuncs.com/goods/Snipaste_2020-03-27_22-19-38.png'
                 },
                 {
-                    id: '48',
-                    img: '/imgs/ads/ads-2.jpg'
+                    id: '10',
+                    img: 'https://fastcar.oss-cn-shenzhen.aliyuncs.com/goods/cq5dam.resized.img.585.low.time1560761736936.jpg'
                 },
                 {
-                    id: '45',
-                    img: '/imgs/ads/ads-3.png'
+                    id: '1047',
+                    img: 'https://fastcar.oss-cn-shenzhen.aliyuncs.com/goods/Snipaste_2020-03-27_22-30-09.png'
                 },
                 {
-                    id: '47',
-                    img: '/imgs/ads/ads-4.jpg'
+                    id: '1164',
+                    img: 'https://fastcar.oss-cn-shenzhen.aliyuncs.com/goods/2000_1125.jpg'
                 }
             ],
             phoneList: [],
             showModal: false,
+            productList:[],
+            pageSize: 10,
+            pageNum:1,
+            total:0
+        }
+    },
+    filters: {
+        currency(val) {
+            if (!val) return '0.00';
+            return '￥' + (val/100/10000).toFixed(2) + '万元'
+        },
+        nameFilter(val){
+            return val.split(' ')[0];
         }
     },
     methods: {
         init() {
-            this.axios.get('/products',{
+            // 获取首页轮播图数据
+            this.getSliderList();
+            this.axios.get('/product/productListByBrand',{
                 params:{
-                    categoryId: 100012,
-                    pageSize: 14
+                    brandId: 1,
                 }
             }).then((res) => {
-                res.list = res.list.slice(6.14);
-                this.phoneList = [res.list.slice(0, 4),res.list.slice(4,8)];
+                this.phoneList = res;
+            });
+            this.getProductByPage();
+        },
+        getProductByPage() {
+            this.axios.get(`/product/productList?pageSize=${this.pageSize}&pageNum=${this.pageNum}`).then(res=>{
+                this.productList = res.list;
+                this.total = res.total;
+                this.productList = [res.list.slice(0,4),res.list.slice(4,8)];
             })
         },
+        getSliderList(){
+          this.axios.get(`/index/findSliderList`).then(res=>{
+              this.sliderList = res;
+          })
+        },
+        handleChange(pageNum) {
+            this.pageNum = pageNum;
+            this.getProductByPage()
+        },
         addCart(id) {
-            this.axios.post('/carts',{
-                productId: id,
-                selected: true,
+            this.axios.get('/cart/addItem',{
+                params:{
+                    productId: id,
+                    num:1
+                }
             }).then((res) => {
                 this.showModal = true;
-                this.$store.dispatch('saveCartCount', res.cartTotalQuantity);
+                this.$store.dispatch('saveCartCount', res.length);
             }).catch(() => {
                 this.showModal = true;
             })
         },
         goToCart(){
             this.$router.push('/cart');
+        },
+        closeVideo(){
+            this.showSlide='slideUp';
+            setTimeout(()=>{
+                this.showSlide='';
+            },600)
         }
     },
     mounted() {
@@ -273,43 +306,6 @@ export default {
                                 @include bgImg(10px, 15px, '/imgs/icon-arrow.png');
                             }
                         }
-                        &:hover{
-                            background-color: $colorA;
-                            .children{
-                                display: block;
-                            }
-                        }
-                        .children {
-                            display: none;
-                            width: 962px;
-                            height: 451px;
-                            background-color: $colorG;
-                            position: absolute;
-                            top: 0;
-                            left: 264px;
-                            border: 1px solid $colorH;
-                            ul {
-                                display: flex;
-                                justify-content: space-between;
-                                height: 75px;
-                                li {
-                                    height: 75px;
-                                    line-height: 75px;
-                                    flex: 1;
-                                    padding-left: 23px;
-                                }
-                                a {
-                                    color: $colorB;
-                                    font-size: 14px;
-                                }
-                                img {
-                                    width: 42px;
-                                    height: 35px;
-                                    vertical-align: middle;
-                                    margin-right: 15px;
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -334,7 +330,98 @@ export default {
             }
         }
         .banner {
-            margin-bottom: 50px;
+            margin-bottom: 20px;
+            .item-video{
+                height:440px;
+                background-color:#070708;
+                margin-bottom:76px;
+                color:#FFFFFF;
+                text-align:center;
+                h2{
+                    font-size:60px;
+                    padding-top:82px;
+                    margin-bottom:47px;
+                }
+                p{
+                    font-size:24px;
+                    margin-bottom:58px;
+                }
+                .video-bg{
+                    background: url('https://assets.volvocars.com/zh-cn/~/media/china/images/cars/s90-20180521/gallerygrid/0601_05.jpg?w=1536') no-repeat center;
+                    background-size:cover;
+                    width:1226px;
+                    height:440px;
+                    margin:0 auto 120px;
+                    cursor:pointer;
+                    img {
+                        margin-top: 13%;
+                        height: 100px;
+                        width: 100px;
+                        opacity: 0.5;
+                        z-index: 9;
+                    }
+                }
+                .video-box{
+                    .overlay{
+                        @include position(fixed);
+                        background-color:#333333;
+                        opacity:.4;
+                        z-index:10;
+                    }
+                    @keyframes slideDown {
+                        from{
+                            top:-50%;
+                            opacity: 0;
+                        }
+                        to{
+                            top: 50%;
+                            opacity: 1;
+                        }
+                    }
+                    @keyframes slideUp {
+                        from{
+                            top:50%;
+                            opacity: 1;
+                        }
+                        to{
+                            top: -50%;
+                            opacity: 0;
+                        }
+                    }
+                    .video {
+                        position: fixed;
+                        top: -50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        z-index: 10;
+                        width: 1000px;
+                        height: 536px;
+                        opacity: 1;
+                        &.slideDown{
+                            animation: slideDown .6s linear;
+                            top:50%;
+                        }
+                        &.slideUp{
+                            animation: slideUp .6s linear;
+                        }
+                        .icon-close {
+                            position: absolute;
+                            top: 20px;
+                            right: 20px;
+                            @include bgImg(20px, 20px, '/imgs/icon-close.png');
+                            cursor: pointer;
+                            z-index: 11;
+                        }
+
+                        video {
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                            outline: none;
+                        }
+                    }
+                }
+            }
         }
         .product-box {
             background-color: $colorJ;
@@ -386,8 +473,8 @@ export default {
                             }
                             .item-img{
                                 img{
-                                    height: 195px;
-                                    width: 100%;
+                                    height: 185px;
+                                    width: 190px;
                                 }
                             }
                             .item-info{
@@ -416,6 +503,9 @@ export default {
                                 }
                             }
                         }
+                    }
+                    .pagination{
+                        text-align:center;
                     }
                 }
             }
